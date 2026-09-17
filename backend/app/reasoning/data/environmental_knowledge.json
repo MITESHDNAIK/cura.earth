@@ -1,0 +1,12 @@
+{
+  "entities": ["soil_organic_carbon", "soil_ph", "soil_moisture", "crop_diversity", "water_availability", "biodiversity", "habitat_fragmentation_index", "climate", "human_impact"],
+  "relationships": [
+    {"from":"soil_organic_carbon","to":"water_availability","type":"positive_feedback","mechanism":"Soil organic matter can support aggregation and water retention."},
+    {"from":"soil_organic_carbon","to":"biodiversity","type":"supports","mechanism":"Soil carbon contributes to biological habitat and food resources for soil organisms."},
+    {"from":"crop_diversity","to":"soil_organic_carbon","type":"enhances","mechanism":"Diverse crops provide varied root inputs and residues."},
+    {"from":"water_availability","to":"biodiversity","type":"supports","mechanism":"Water availability constrains productivity and species persistence."},
+    {"from":"habitat_fragmentation_index","to":"biodiversity","type":"degrades","mechanism":"Fragmentation can reduce habitat connectivity and movement."},
+    {"from":"human_impact","to":"biodiversity","type":"degrades","mechanism":"High disturbance can reduce habitat quality."},
+    {"from":"soil_ph","to":"biodiversity","type":"affects","mechanism":"Unsuitable pH can constrain nutrient availability and biological communities."}
+  ]
+}

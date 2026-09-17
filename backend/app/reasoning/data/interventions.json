@@ -1,0 +1,200 @@
+{
+  "legume_intercropping": {
+    "name": "Legume-based intercropping",
+    "affects": [
+      "crop_diversity",
+      "soil_organic_carbon",
+      "water_availability",
+      "biodiversity"
+    ],
+    "impact_factor": 0.78,
+    "time_horizon": "medium_term",
+    "description": "Add compatible legumes alongside the main crop to diversify roots and biological inputs.",
+    "strengths": [
+      "monoculture",
+      "low_soc",
+      "soil_degradation",
+      "nitrogen_depletion",
+      "crop_diversity"
+    ],
+    "avoid_when": [
+      "already_diverse",
+      "habitat_fragmentation_only"
+    ],
+    "priority": 4
+  },
+  "cover_cropping": {
+    "name": "Cover cropping with reduced soil disturbance",
+    "affects": [
+      "soil_organic_carbon",
+      "soil_moisture",
+      "water_availability",
+      "biodiversity"
+    ],
+    "impact_factor": 0.8,
+    "time_horizon": "medium_term",
+    "description": "Maintain living or residue cover between crop cycles and reduce bare-soil exposure.",
+    "strengths": [
+      "low_soc",
+      "very_low_moisture",
+      "erosion",
+      "degraded_soil",
+      "conventional_tillage",
+      "water_stress"
+    ],
+    "avoid_when": [
+      "healthy_soil"
+    ],
+    "priority": 4
+  },
+  "agroforestry": {
+    "name": "Agroforestry / tree-crop integration",
+    "affects": [
+      "crop_diversity",
+      "soil_organic_carbon",
+      "water_availability",
+      "biodiversity",
+      "habitat_fragmentation_index"
+    ],
+    "impact_factor": 0.86,
+    "time_horizon": "long_term",
+    "description": "Integrate appropriately selected perennial trees or shrubs with crops to create a more structurally diverse production system.",
+    "strengths": [
+      "low_soc",
+      "low_rainfall",
+      "very_low_rainfall",
+      "monoculture",
+      "dryland",
+      "fragmentation",
+      "multiple_stressors"
+    ],
+    "avoid_when": [
+      "healthy_soil_and_water",
+      "habitat_only"
+    ],
+    "priority": 3
+  },
+  "native_hedgerows": {
+    "name": "Native flowering hedgerows / habitat corridors",
+    "affects": [
+      "habitat_fragmentation_index",
+      "biodiversity",
+      "water_availability"
+    ],
+    "impact_factor": 0.78,
+    "time_horizon": "medium_term",
+    "description": "Restore native flowering field margins and connected habitat strips for pollinators and other beneficial organisms.",
+    "strengths": [
+      "pollinator_decline",
+      "biodiversity_decline",
+      "fragmentation",
+      "high_fragmentation",
+      "habitat_loss"
+    ],
+    "avoid_when": [
+      "soil_only"
+    ],
+    "priority": 5
+  },
+  "water_retention_management": {
+    "name": "Soil-water retention management",
+    "affects": [
+      "soil_moisture",
+      "water_availability",
+      "soil_organic_carbon"
+    ],
+    "impact_factor": 0.76,
+    "time_horizon": "short_term",
+    "description": "Use mulching, contour-aligned ground cover and reduced bare-soil exposure to retain water in the root zone.",
+    "strengths": [
+      "very_low_moisture",
+      "water_stress",
+      "drought",
+      "low_rainfall",
+      "sandy_soil"
+    ],
+    "avoid_when": [
+      "water_adequate"
+    ],
+    "priority": 5
+  },
+  "soil_ph_management": {
+    "name": "Targeted soil pH management",
+    "affects": [
+      "soil_ph",
+      "soil_organic_carbon",
+      "biodiversity"
+    ],
+    "impact_factor": 0.74,
+    "time_horizon": "medium_term",
+    "description": "Correct strongly acidic or alkaline soil conditions based on a soil test and crop requirements.",
+    "strengths": [
+      "acidic_soil",
+      "alkaline_soil",
+      "ph_constraint"
+    ],
+    "avoid_when": [
+      "ph_adequate"
+    ],
+    "priority": 5
+  },
+  "pesticide_reduction": {
+    "name": "Targeted pesticide-risk reduction and integrated pest management",
+    "affects": [
+      "biodiversity",
+      "water_availability",
+      "human_impact"
+    ],
+    "impact_factor": 0.75,
+    "time_horizon": "medium_term",
+    "description": "Reduce unnecessary broad-spectrum pesticide exposure through monitoring, thresholds and targeted controls.",
+    "strengths": [
+      "high_pollution",
+      "pollinator_decline",
+      "pesticide_pollution",
+      "water_contamination"
+    ],
+    "avoid_when": [],
+    "priority": 5
+  },
+  "habitat_restoration": {
+    "name": "Native habitat restoration and connectivity",
+    "affects": [
+      "habitat_fragmentation_index",
+      "biodiversity",
+      "human_impact"
+    ],
+    "impact_factor": 0.79,
+    "time_horizon": "long_term",
+    "description": "Restore native habitat patches and connections where land conversion or habitat loss is the dominant pressure.",
+    "strengths": [
+      "habitat_loss",
+      "deforestation",
+      "high_fragmentation",
+      "biodiversity_decline"
+    ],
+    "avoid_when": [
+      "soil_only"
+    ],
+    "priority": 4
+  },
+  "riparian_buffers": {
+    "name": "Native riparian buffer restoration",
+    "affects": [
+      "water_availability",
+      "biodiversity",
+      "human_impact"
+    ],
+    "impact_factor": 0.77,
+    "time_horizon": "medium_term",
+    "description": "Restore vegetated buffers along watercourses to intercept runoff and improve aquatic and terrestrial habitat.",
+    "strengths": [
+      "high_pollution",
+      "water_contamination",
+      "erosion",
+      "habitat_loss"
+    ],
+    "avoid_when": [],
+    "priority": 4
+  }
+}

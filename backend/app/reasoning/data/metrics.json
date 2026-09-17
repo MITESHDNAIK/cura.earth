@@ -1,0 +1,26 @@
+{
+  "soil_health": [
+    {"metric": "soil_organic_carbon", "unit": "%", "range": "0-10", "description": "Percent of organic carbon in topsoil"},
+    {"metric": "soil_ph", "unit": "pH", "range": "3-9", "description": "Acidity/alkalinity of soil"}
+  ],
+  "land_use": [
+    {"metric": "percent_agricultural", "unit": "%", "range": "0-100", "description": "Land area used for agriculture"},
+    {"metric": "forest_cover", "unit": "%", "range": "0-100", "description": "Forest cover percentage"}
+  ],
+  "biodiversity": [
+    {"metric": "species_richness", "unit": "count", "range": "0-5000", "description": "Number of species per km²"},
+    {"metric": "keystone_species_index", "unit": "score", "range": "0-1", "description": "Presence of keystone species"}
+  ],
+  "climate": [
+    {"metric": "average_temperature", "unit": "°C", "range": "-30-50", "description": "Mean annual temperature"},
+    {"metric": "precipitation", "unit": "mm", "range": "0-5000", "description": "Annual precipitation"}
+  ],
+  "water_availability": [
+    {"metric": "groundwater_level", "unit": "m", "range": "0-200", "description": "Depth to groundwater"},
+    {"metric": "surface_water_flow", "unit": "m³/s", "range": "0-1000", "description": "River/stream flow rate"}
+  ],
+  "human_impact": [
+    {"metric": "population_density", "unit": "people/km²", "range": "0-20000", "description": "Human population density"},
+    {"metric": "carbon_footprint", "unit": "tCO₂/yr", "range": "0-10000", "description": "Regional carbon emissions"}
+  ]
+}

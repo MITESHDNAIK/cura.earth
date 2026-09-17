@@ -1,0 +1,58 @@
+{
+  "matrices": [
+    {
+      "dimension": "soil_to_biodiversity",
+      "primary_driver": "soil_organic_carbon",
+      "correlated_metrics": [
+        {
+          "metric": "microbial_biomass_carbon",
+          "relationship": "positive_linear",
+          "elasticity": 0.85,
+          "description": "Increases in labile organic fractions directly stimulate fungal-to-bacterial biomass ratios."
+        },
+        {
+          "metric": "earthworm_density",
+          "relationship": "positive_sigmoidal",
+          "elasticity": 0.72,
+          "description": "Sustained residue coverage and SOC above 1.0% provides essential detrital nourishment."
+        }
+      ]
+    },
+    {
+      "dimension": "water_to_species_survival",
+      "primary_driver": "water_retention_capacity",
+      "correlated_metrics": [
+        {
+          "metric": "drought_resilience_days",
+          "relationship": "positive_exponential",
+          "elasticity": 1.15,
+          "description": "Each additional mm/m of available water capacity prolongs plant survival through prolonged dry spells."
+        },
+        {
+          "metric": "wildlife_drinking_density",
+          "relationship": "positive_linear",
+          "elasticity": 0.60,
+          "description": "Perennial surface water retention sustains native avian and mammal populations."
+        }
+      ]
+    },
+    {
+      "dimension": "land_use_to_fragmentation",
+      "primary_driver": "habitat_fragmentation_index",
+      "correlated_metrics": [
+        {
+          "metric": "pollinator_foraging_efficiency",
+          "relationship": "negative_exponential",
+          "elasticity": -1.30,
+          "description": "Corridor disruption exceeding 500m gaps drastically impedes solitary bee pollination radius."
+        },
+        {
+          "metric": "edge_effect_microclimate_desiccation",
+          "relationship": "positive_linear",
+          "elasticity": 0.90,
+          "description": "High edge density leads to drying winds and elevated understory temperatures."
+        }
+      ]
+    }
+  ]
+}

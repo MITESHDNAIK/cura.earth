@@ -1,0 +1,11 @@
+{
+  "entities": ["soil_health", "land_use", "biodiversity", "climate", "water_availability", "human_impact"],
+  "relationships": [
+    {"from": "soil_health", "to": "biodiversity", "type": "supports", "evidence": ["chunk_001", "chunk_042"]},
+    {"from": "land_use", "to": "water_availability", "type": "reduces", "evidence": ["chunk_017"]},
+    {"from": "climate", "to": "soil_health", "type": "affects", "evidence": ["chunk_023"]},
+    {"from": "human_impact", "to": "biodiversity", "type": "degrades", "evidence": ["chunk_058"]},
+    {"from": "water_availability", "to": "soil_health", "type": "enhances", "evidence": ["chunk_034"]},
+    {"from": "land_use", "to": "biodiversity", "type": "reduces", "evidence": ["chunk_019"]}
+  ]
+}

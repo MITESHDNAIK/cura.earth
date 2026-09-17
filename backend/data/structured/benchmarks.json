@@ -1,0 +1,34 @@
+{
+  "regional_benchmarks": {
+    "semi_arid": {
+      "typical_annual_rainfall_mm": [250, 500],
+      "baseline_soc_pct": 0.4,
+      "healthy_target_soc_pct": 1.2,
+      "priority_actions": [
+        "agroforestry_shelterbelts",
+        "legume_intercropping",
+        "minimal_tillage"
+      ]
+    },
+    "mediterranean": {
+      "typical_annual_rainfall_mm": [400, 700],
+      "baseline_soc_pct": 0.8,
+      "healthy_target_soc_pct": 1.8,
+      "priority_actions": [
+        "winter_cover_cropping",
+        "contour_hedgerows",
+        "organic_amendments"
+      ]
+    },
+    "sub_humid": {
+      "typical_annual_rainfall_mm": [700, 1200],
+      "baseline_soc_pct": 1.2,
+      "healthy_target_soc_pct": 2.5,
+      "priority_actions": [
+        "rotational_grazing",
+        "riparian_buffers",
+        "perennial_pasture_integration"
+      ]
+    }
+  }
+}

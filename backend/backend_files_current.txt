@@ -1,0 +1,729 @@
+========== extractor.py ==========
+"""
+Natural-language environmental information extractor.
+
+This is intentionally lightweight and deterministic.
+
+It converts normal user language into the structured environmental
+profile consumed by Cura.Earth's reasoning engine.
+"""
+
+from __future__ import annotations
+
+import re
+from typing import Any, Dict
+
+
+class EnvironmentalExtractor:
+
+    def extract(self, text: str) -> Dict[str, Any]:
+        text = (text or "").strip()
+
+        profile: Dict[str, Any] = {
+            "soil": {},
+            "climate": {},
+            "land_use": {},
+            "spatial": {},
+            "biodiversity": {},
+            "human_impact": {},
+            "what_if": {},
+        }
+
+        if not text:
+            return profile
+
+        lower = text.lower()
+
+        self._extract_soil(lower, profile)
+        self._extract_climate(lower, profile)
+        self._extract_land_use(lower, profile)
+        self._extract_biodiversity(lower, profile)
+        self._extract_human_impact(lower, profile)
+        self._extract_spatial(lower, profile)
+        self._extract_intervention(lower, profile)
+
+        # Remove empty sections.
+        return {
+            key: value
+            for key, value in profile.items()
+            if value
+        }
+
+    # ============================================================
+    # SOIL
+    # ============================================================
+
+    def _extract_soil(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        # SOC:
+        # "SOC is 0.3%"
+        # "soil organic carbon is 0.3 percent"
+        # "organic carbon around 0.3%"
+        soc_patterns = [
+            r"(?:soil\s+organic\s+carbon|soil\s+carbon|organic\s+carbon|soc)"
+            r"\s*(?:is|=|around|about|approximately|of)?\s*"
+            r"(\d+(?:\.\d+)?)\s*(?:%|percent)",
+            # Handle colon-separated format e.g., "soil organic carbon: 0.3%"
+            r"(?:soil\s+organic\s+carbon|soil\s+carbon|organic\s+carbon|soc)\s*[:]\s*(\d+(?:\.\d+)?)\s*(%|percent)"
+        ]
+
+        for pattern in soc_patterns:
+            match = re.search(pattern, text, re.I)
+            if match:
+                profile["soil"]["organic_carbon_pct"] = float(
+                    match.group(1)
+                )
+                break
+
+        # pH
+        ph_match = re.search(
+            r"(?:soil\s+)?pH\s*(?:is|=|around|about)?\s*"
+            r"(\d+(?:\.\d+)?)",
+            text,
+            re.I,
+        )
+
+        if ph_match:
+            profile["soil"]["ph"] = float(ph_match.group(1))
+
+        # Moisture
+        moisture_match = re.search(
+            r"(?:soil\s+)?moisture\s*(?:is|=|around|about)?\s*"
+            r"(\d+(?:\.\d+)?)\s*(?:%|percent)",
+            text,
+            re.I,
+        )
+
+        if moisture_match:
+            profile["soil"]["moisture_pct"] = float(
+                moisture_match.group(1)
+            )
+
+        # Qualitative soil condition.
+        if any(
+            phrase in text
+            for phrase in [
+                "poor soil",
+                "soil is poor",
+                "soil has degraded",
+                "degraded soil",
+                "soil degradation",
+                "soil is degraded",
+                "soil health is poor",
+                "fertility has declined",
+            ]
+        ):
+            profile["soil"]["soil_health"] = "degraded"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "healthy soil",
+                "soil is healthy",
+                "good soil",
+            ]
+        ):
+            profile["soil"]["soil_health"] = "healthy"
+
+    # ============================================================
+    # CLIMATE / WATER
+    # ============================================================
+
+    def _extract_climate(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        # Rainfall amount
+        rainfall_match = re.search(
+            r"(?:annual\s+)?rainfall\s*(?:is|=|around|about|of)?\s*"
+            r"(\d+(?:\.\d+)?)\s*(?:mm|millimetres|millimeters)",
+            text,
+            re.I,
+        )
+
+        if rainfall_match:
+            profile["climate"]["annual_rainfall_mm"] = float(
+                rainfall_match.group(1)
+            )
+
+        # Rainfall category – handle explicit words and colon format "rainfall: low"
+        if any(
+            phrase in text
+            for phrase in [
+                "low rainfall",
+                "rainfall is low",
+                "very low rainfall",
+                "little rainfall",
+                "low rain",
+                "rain is low",
+                "dry climate",
+                "dry region",
+                "water stress",
+                "water shortage",
+                "drought",
+                "drought-prone",
+                "drought prone",
+                "rainfall: low",
+                "rainfall: very low",
+                "rainfall: little",
+                "rainfall: dry",
+            ]
+        ):
+            profile["climate"]["rainfall_category"] = "low"
+
+        elif any(
+            phrase in text
+            for phrase in [
+                "high rainfall",
+                "heavy rainfall",
+                "rainfall is high",
+                "very rainy",
+                "wet climate",
+                "rainfall: high",
+                "rainfall: very high",
+                "rainfall: wet",
+            ]
+        ):
+            profile["climate"]["rainfall_category"] = "high"
+
+        # Temperature
+        temperature_match = re.search(
+            r"(?:temperature|temp)\s*(?:is|=|around|about)?\s*"
+            r"(\d+(?:\.\d+)?)\s*(?:°?\s*c|celsius)",
+            text,
+            re.I,
+        )
+
+        if temperature_match:
+            profile["climate"]["temperature_celsius"] = float(
+                temperature_match.group(1)
+            )
+
+        # Aridity
+        aridity_match = re.search(
+            r"(?:aridity\s+index|aridity)\s*(?:is|=|around|about)?\s*"
+            r"(\d+(?:\.\d+)?)",
+            text,
+            re.I,
+        )
+
+        if aridity_match:
+            profile["climate"]["aridity_index"] = float(
+                aridity_match.group(1)
+            )
+
+    # ============================================================
+    # LAND USE
+    # ============================================================
+
+    def _extract_land_use(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        crops = [
+            "wheat",
+            "rice",
+            "maize",
+            "corn",
+            "soybean",
+            "cotton",
+            "sugarcane",
+            "millet",
+            "sorghum",
+            "barley",
+        ]
+
+        for crop in crops:
+            if re.search(
+                rf"\b{re.escape(crop)}\b",
+                text,
+                re.I,
+            ):
+                profile["land_use"]["crop_type"] = crop
+                break
+
+        if any(
+            phrase in text
+            for phrase in [
+                "monoculture",
+                "single crop",
+                "one crop",
+                "same crop every year",
+                "grow the same crop every year",
+                "growing wheat every year",
+                "wheat every year",
+            ]
+        ):
+            profile["land_use"]["management"] = "monoculture"
+            profile["land_use"]["crop_diversity"] = "low"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "intercropping",
+                "intercrop",
+                "mixed cropping",
+                "mixed crops",
+            ]
+        ):
+            profile["land_use"]["management"] = "intercropping"
+            profile["land_use"]["crop_diversity"] = "high"
+
+        if "agroforestry" in text:
+            profile["land_use"]["management"] = "agroforestry"
+            profile["land_use"]["crop_diversity"] = "high"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "crop diversity is low",
+                "low crop diversity",
+                "low diversity of crops",
+            ]
+        ):
+            profile["land_use"]["crop_diversity"] = "low"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "crop diversity is high",
+                "high crop diversity",
+                "diverse crops",
+            ]
+        ):
+            profile["land_use"]["crop_diversity"] = "high"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "conventional tillage",
+                "conventional farming",
+                "intensive tillage",
+            ]
+        ):
+            profile["land_use"]["tillage_practice"] = "conventional"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "reduced tillage",
+                "minimum tillage",
+                "no till",
+                "no-till",
+            ]
+        ):
+            profile["land_use"]["tillage_practice"] = "reduced"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "fragmented habitat",
+                "habitat fragmentation",
+                "high fragmentation",
+                "highly fragmented",
+                "fields are fragmented",
+            ]
+        ):
+            profile["land_use"]["habitat_fragmentation"] = "high"
+
+    # ============================================================
+    # BIODIVERSITY
+    # ============================================================
+
+    def _extract_biodiversity(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        if any(
+            phrase in text
+            for phrase in [
+                "biodiversity is declining",
+                "biodiversity decline",
+                "biodiversity declining",
+                "biodiversity is decreasing",
+                "biodiversity has declined",
+                "less biodiversity",
+                "loss of biodiversity",
+            ]
+        ):
+            profile["biodiversity"]["status"] = "declining"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "pollinators are declining",
+                "pollinator decline",
+                "fewer pollinators",
+                "pollinators disappearing",
+                "pollinators have disappeared",
+                "pollinators disappeared",
+            ]
+        ):
+            profile["biodiversity"]["pollinator_status"] = "declining"
+
+        if any(
+            phrase in text
+            for phrase in [
+                "species are declining",
+                "species decline",
+                "species disappearing",
+                "wildlife is declining",
+                "wildlife decline",
+            ]
+        ):
+            profile["biodiversity"]["species_status"] = "declining"
+
+    # ============================================================
+    # HUMAN IMPACT
+    # ============================================================
+
+    def _extract_human_impact(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        if any(
+            phrase in text
+            for phrase in [
+                "pollution",
+                "polluted",
+                "chemical pollution",
+                "pesticide pollution",
+            ]
+        ):
+            profile["human_impact"]["pollution"] = True
+
+        if any(
+            phrase in text
+            for phrase in [
+                "deforestation",
+                "forest loss",
+                "trees have been removed",
+                "trees removed",
+            ]
+        ):
+            profile["human_impact"]["deforestation"] = True
+
+        if any(
+            phrase in text
+            for phrase in [
+                "habitat loss",
+                "land conversion",
+                "land converted",
+                "natural habitat removed",
+            ]
+        ):
+            profile["human_impact"]["land_use_change"] = True
+
+    # ============================================================
+    # SPATIAL
+    # ============================================================
+
+    def _extract_spatial(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        regions = [
+            "semi-arid",
+            "semi arid",
+            "arid",
+            "tropical",
+            "temperate",
+            "coastal",
+            "forest",
+            "grassland",
+            "wetland",
+        ]
+
+        for region in regions:
+            if region in text:
+                profile["spatial"]["region"] = region
+                break
+
+    # ============================================================
+    # WHAT-IF INTERVENTION
+    # ============================================================
+
+    def _extract_intervention(
+        self,
+        text: str,
+        profile: Dict[str, Any],
+    ) -> None:
+
+        interventions = {
+            "agroforestry": [
+                "agroforestry",
+                "trees between crops",
+                "trees among crops",
+                "integrate trees",
+                "introduce trees",
+            ],
+            "legume_intercropping": [
+                "legume intercropping",
+                "legume intercrop",
+                "intercrop legumes",
+                "plant legumes between",
+            ],
+            "cover_cropping": [
+                "cover cropping",
+                "cover crop",
+                "cover crops",
+            ],
+            "native_hedgerows": [
+                "hedgerow",
+                "hedgerows",
+                "habitat corridor",
+                "native flowering plants",
+            ],
+        }
+
+        for key, phrases in interventions.items():
+            if any(phrase in text for phrase in phrases):
+                profile["what_if"]["intervention"] = key
+                break
+
+
+# Singleton used by the application.
+extractor = EnvironmentalExtractor()
+
+
+def extract_environmental_profile(text: str) -> Dict[str, Any]:
+    return extractor.extract(text)
+
+========== completeness.py ==========
+"""Strict sufficiency gate for multi-metric reasoning.
+
+A response is allowed to reason only when at least three concrete environmental
+signals are available. This prevents the recommendation layer from inventing
+missing conditions.
+"""
+from typing import Any, Dict
+
+
+def _leaf_count(profile: Dict[str, Any]) -> int:
+    count = 0
+    for group, data in (profile or {}).items():
+        if group == "what_if" or not isinstance(data, dict):
+            continue
+        for value in data.values():
+            if value is not None and value != "":
+                count += 1
+    return count
+
+
+def _groups(profile: Dict[str, Any]) -> set[str]:
+    return {k for k, v in (profile or {}).items() if isinstance(v, dict) and v and k != "what_if"}
+
+
+def _what_if(query: str) -> bool:
+    q = (query or "").lower()
+    return any(p in q for p in ["what if", "if i introduce", "if i add", "if i switch", "suppose i", "what happens if"])
+
+
+def assess_sufficiency(query: str, profile: Dict[str, Any] | None) -> Dict[str, Any]:
+    profile = profile or {}
+    q = (query or "").lower()
+    leaves = _leaf_count(profile)
+    groups = _groups(profile)
+    is_what_if = _what_if(query)
+
+    # A what-if still requires a real baseline. Never simulate an imagined profile.
+    if is_what_if and leaves < 3:
+        return {
+            "sufficient": False, "requires_clarification": True,
+            "missing": ["baseline_environment"], "groups": sorted(groups), "is_what_if": True,
+            "clarification": "Before I simulate that intervention, give me at least three baseline details such as soil carbon/moisture, rainfall, crop or land use, biodiversity, or habitat fragmentation."
+        }
+
+    # No useful environmental information.
+    if leaves == 0 and not groups:
+        return {
+            "sufficient": False, "requires_clarification": True, "missing": ["environmental_context"],
+            "groups": [], "is_what_if": is_what_if,
+            "clarification": "Tell me about at least three environmental details — for example soil condition or SOC, rainfall/moisture, crop or land use, biodiversity, or habitat fragmentation."
+        }
+
+    # Biodiversity-only complaint: ask for drivers instead of guessing them.
+    biodiversity_only = groups == {"biodiversity"} or ("biodiversity" in q and leaves <= 1)
+    if biodiversity_only:
+        return {
+            "sufficient": False, "requires_clarification": True, "missing": ["environmental_context"],
+            "groups": sorted(groups), "is_what_if": is_what_if,
+            "clarification": "I can diagnose the biodiversity decline, but I don't want to guess its cause. What are the site's crop/land-use conditions and its water or soil conditions?"
+        }
+
+    if leaves < 3:
+        missing_hint = "one or more environmental details"
+        if "soil" not in groups: missing_hint = "a soil detail such as SOC, pH, or moisture"
+        elif "climate" not in groups: missing_hint = "a climate/water detail such as rainfall or moisture"
+        elif "land_use" not in groups: missing_hint = "a land-use detail such as crop, management, or fragmentation"
+        return {
+            "sufficient": False, "requires_clarification": True, "missing": ["more_environmental_context"],
+            "groups": sorted(groups), "is_what_if": is_what_if,
+            "clarification": f"I have {leaves} usable environmental detail(s). Give me {missing_hint} so I can connect at least three variables without inventing data."
+        }
+
+    return {
+        "sufficient": True, "requires_clarification": False, "missing": [],
+        "groups": sorted(groups), "is_what_if": is_what_if, "clarification": None
+    }
+
+
+def check_completeness(query: str, profile: Dict[str, Any] | None) -> Dict[str, Any]:
+    return assess_sufficiency(query, profile)
+
+
+========== conversation_service.py ==========
+from typing import Any, Dict, Optional
+from app.core.conversation import ConversationMemory
+from app.core.schema import EnvironmentalInput
+from app.reasoning.extractor import extract_environmental_profile
+from app.reasoning.completeness import check_completeness
+from app.reasoning.engine import reasoning_engine
+from app.recommendations.engine import recommendation_engine
+
+
+class ConversationService:
+    """Stateful multi-turn environmental analysis with isolated sessions."""
+    def __init__(self):
+        self.memory = ConversationMemory()
+
+    @staticmethod
+    def _deep_merge(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
+        result = dict(existing or {})
+        for key, value in (incoming or {}).items():
+            if value is None or value == "":
+                continue
+            if isinstance(value, dict) and isinstance(result.get(key), dict):
+                result[key] = ConversationService._deep_merge(result[key], value)
+            else:
+                result[key] = value
+        return result
+
+    def _extract(self, message: str) -> Dict[str, Any]:
+        data = extract_environmental_profile(message)
+        if hasattr(data, "model_dump"):
+            data = data.model_dump(exclude_none=True)
+        return data if isinstance(data, dict) else {}
+
+    @staticmethod
+    def _to_environmental_input(profile: Dict[str, Any], session_id: str, query: str) -> EnvironmentalInput:
+        return EnvironmentalInput.model_validate({
+            "session_id": session_id,
+            "query": query,
+            **profile,
+        })
+
+    def process_message(self, conversation_id: str, message: str) -> Dict[str, Any]:
+        state = self.memory.get_or_create(conversation_id)
+        state.messages.append({"role": "user", "content": message})
+
+        extracted = self._extract(message)
+        state.environmental_profile = self._deep_merge(state.environmental_profile, extracted)
+        profile = state.environmental_profile
+
+        completeness = check_completeness(query=message, profile=profile)
+        is_what_if = completeness.get("is_what_if", False)
+        intervention = self._extract_intervention(message)
+        if is_what_if and intervention:
+            state.intervention = intervention
+
+        if completeness.get("requires_clarification", False):
+            return {
+                "session_id": conversation_id,
+                "status": "needs_clarification",
+                "profile": profile,
+                "active_variables": [],
+                "variable_connections": [],
+                "recommendations": [],
+                "is_what_if": is_what_if,
+                "intervention": state.intervention,
+                "clarification": self._clarification_list(completeness.get("clarification")),
+                "message": completeness.get("clarification"),
+            }
+
+        env = self._to_environmental_input(profile, conversation_id, message)
+        active, connections = reasoning_engine.reason(env)
+        recommendations = recommendation_engine.generate_recommendations(env, active, connections)
+
+        return {
+            "session_id": conversation_id,
+            "status": "what_if_ready" if is_what_if else "ready_for_reasoning",
+            "profile": profile,
+            "active_variables": active,
+            "variable_connections": connections,
+            "recommendations": recommendations,
+            "is_what_if": is_what_if,
+            "intervention": state.intervention,
+            "clarification": [],
+            "message": "Environmental system understood. Multi-metric reasoning and context-specific recommendations completed.",
+        }
+
+    @staticmethod
+    def _clarification_list(text: Optional[str]):
+        if not text:
+            return []
+        return [{"field_key": "environmental_context", "prompt_text": text, "recommended_options": None}]
+
+    @staticmethod
+    def _extract_intervention(message: str) -> Optional[str]:
+        q = (message or "").lower()
+        mappings = {
+            "agroforestry": ["agroforestry", "trees between crops", "tree crop integration"],
+            "legume_intercropping": ["legume intercropping", "intercrop legumes", "intercropping", "legumes between"],
+            "cover_cropping": ["cover crop", "cover cropping", "cover crops"],
+            "native_hedgerows": ["hedgerow", "native hedgerow", "habitat corridor", "flowering corridor"],
+        }
+        for key, phrases in mappings.items():
+            if any(p in q for p in phrases):
+                return key
+        return None
+
+    def clear(self, conversation_id: str):
+        self.memory.clear(conversation_id)
+
+
+conversation_service = ConversationService()
+
+
+========== conversation.py ==========
+from fastapi import APIRouter
+from app.core.schema import EnvironmentalInput, EnvironmentalReasoningResponse
+from app.reasoning.conversation_service import conversation_service
+
+router = APIRouter()
+
+
+@router.post("/conversation", response_model=EnvironmentalReasoningResponse)
+async def conversation_endpoint(payload: EnvironmentalInput):
+    session_id = payload.session_id or "default"
+    result = conversation_service.process_message(session_id, payload.query or "")
+    return EnvironmentalReasoningResponse(
+        session_id=result["session_id"],
+        requires_clarification=result["status"] == "needs_clarification",
+        clarification_questions=result.get("clarification", []),
+        interconnected_variables=result.get("active_variables", []),
+        variable_connections=result.get("variable_connections", []),
+        recommendations=result.get("recommendations", []),
+        system_notes=result.get("message", ""),
+    )
+
+
+@router.delete("/{session_id}")
+async def reset_conversation(session_id: str):
+    conversation_service.clear(session_id)
+    return {"session_id": session_id, "cleared": True}
+
