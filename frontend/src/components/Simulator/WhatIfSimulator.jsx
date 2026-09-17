@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Play, RotateCcw, Info, CheckCircle2, AlertCircle, FlaskConical, Sparkles } from 'lucide-react';
 import MetricProjection from './MetricProjection';
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : 'https://cura-earth.onrender.com');
 const OPTIONS = [
   { key: 'agroforestry', label: 'Agroforestry / tree-crop integration' },
   { key: 'legume_intercropping', label: 'Legume intercropping' },
@@ -66,3 +66,4 @@ export default function WhatIfSimulator({ context }) {
     </div>
   );
 }
+
